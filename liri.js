@@ -1,145 +1,133 @@
-
-
-
-
-
 var action = process.argv[2];
-var value = process.argv[3];
+// var value = process.argv[3]; (THIS ONLY TAKES IN ONE NODE ARGUMENT FOR THE 3RD NODE SO ADDED CODE BELOW)
 
+// STORE ALL OF THE ARGUMENTS IN AN ARRAY
+var nodeArgs = process.argv;
 
-var request = require('request');
+// CREATE AN EMPTY VARIABLE FOR HOLDING USERS INPUT VALUE
+var value = "";
 
-var spotify = require("spotify");
+// LOOPS THROUGH ALL THE WORDS/STRINGS IN THE NODE ARGUMENT 
+// DO A FOR LOOP TO GET EVERYTHING AFTER THE INDEX OF 2 NODE ARGUMENT
+for (var i = 3; i < nodeArgs.length; i++) {
 
+    if (i > 3 && i < nodeArgs.length) {
 
+        value = value + "+" + nodeArgs[i]; 
 
+    } else {
 
-		//switch is a function that called directly
-		// action is a global variable takes place at process.argv[2] which is a user input
-switch (action) {
-		
-	case 'my-tweets':
-		tweets();
-		break;
-		//if USER TYPES: "spotify" perform the function 'spotify-this-song'
-	case 'spotify-this-song':
-		spotify();
-		break;
-		//if USER TYPES: "omdb" perform the function 'movie-this'
-	case 'movie-this':
-		omdb();
-		break;
-		//if USER TYPES: "random" perform functions 'do-what-it-says'
-	case 'do-what-it-says':
-		random();
-		break;
+        value = value + nodeArgs[i];
+    }
 }
 
-// my-tweets function begins//
-function tweets() {
-	var fs = require('fs');
+// SWITCH STATEMENT FOR RUNNING DIFFERENT APPS 
+// THIS WILL DIRECT WHICH FUNCTION TO RUN
+switch (action) {
+    case 'my-tweets':
+        twitter();
+        break;
 
-	var keys = require('./keys.js');
+    case 'spotify-this-song':
+        spotify();
+        break;
 
-	var Twitter = require('twitter');
+    case 'movie-this':
+        omdb();
+        break;
 
-	var client = new Twitter(keys.twitterKeys);
+    case 'do-what-it-says':
+        dwis();
+        break;
+}
 
 
-	var params = {screen_name: 'erespinoza', count: 20};
-	
-	client.get('statuses/user_timeline', params, function(error, tweets, response) {
-  	
-  	if (!error) {
-  		var data = []; //empty array to hold data
-  		for(var i = 0; i < tweets.length; i++) {
-  			data.push(
-  				'created at: ' : tweets[i].created_at,
-  				'Tweets: ' : tweets[i].text,
-  			});
-  		} 
-  		console.log(data) //which data array was created in row 47
 
-  		}
-	});
-};
+//TWITTER
 
-  	
+function twitter() {
+    //FS IS AN NPM PACKAGE FOR READING AND WRITING FILES 
+    var fs = require('fs');
 
-function spotify() {
-	var spotify = new Spotify({
-  		id: "9573aa92802f45aa86130300ade99be2",
-  		secret: "37cd636287a741b18f3d8bd748c6375f"
-	});
- 
-	spotify.search({ type: 'track', query: 'All the Small Things' }, function(err, data) {
-  		if (err) {
-    	return console.log('Error occurred: ' + err);
-  	}
- 
-	console.log(data); 
-	});
-	};
+    //GETS THE TWITTER KEYS FROM THE "keys.js" file
+    var twitterKey = require('./keys.js');
+    // console.log(twitterKey.twitterKeys) THIS IS A TEST TO CONSOLE LOG THE KEYS. 
+
+    //GRAB THE TWITTER PACKAGE 
+    var Twitter = require('twitter');
+
+    //TWITTER CALL WHICH PASSES THROUGH THE TWITTER KEYS FROM VARIABLE TWITTERKEY
+    var client = new Twitter(twitterKey.twitterKeys);
+
+    //THIS GRABS THE SECOND NODE FOR USERNAME ARGUMENT AND PASSES IT THROUGH
+    // var userInput = process.argv[3];
+
+    //NODE FUNCTION THAT GRABS THE TWITTER INFROMATION 
+    var params = { screen_name: value, count: 20 };
+    client.get('statuses/user_timeline', params, function(error, tweets, response) {
+        if (!error) {
+
+            console.log("=============================================");
+            console.log("Here are the 20 most recent tweets");
+
+            for (var i = 0; i < tweets.length; i++) {
+
+                console.log("_____________________________________________");
+                console.log("Tweeted on: " + tweets[i].created_at);
+                console.log(tweets[i].text);
+
+            }
+        }
+    });
+}
+
+
+
+
+
+//SPOTIFY
+
+// function spotify()
+
+
+
+
+
+
+//OMDB
 
 function omdb() {
-	var nodeArgs = process.argv;
-	var movieName = "";
 
-	for (var i = 2; i < nodeArgs.length; i++)
-		
-		
-			if (i > 2 && i < nodeArgs.length) {
-				movieName = movieName + "+" + nodeArgs[i];
-			}
-			else {
-				movieName += nodeArgs[i];
-			}
-	}
-	var queryURL = "http://omdbapi.com/?t=" + movieName + "&y=plot=short&apikey=40e9cece";
-	request(queryURL,function(error, response,body) {
-		if (!error && response.statusCode === 200) {
-			console.log("Title:" + JSON.parse(body).Title);
-			console.log("Year:" + JSON.parse(body).Year);
-			console.log("IMDB Rating:" + JSON.parse(body).imdbRating);
-			console.log("Country:" + JSON.parse(body).Country);
-			console.log("Language:" + JSON.parse(body).Language);
-			console.log("Plot:" + JSON.parse(body).Plot);
-			console.log("Actors:" + JSON.parse(body).Actors);
-			console.log("Rotten Tomatoes Rating" + JSON.parse(body).tomatoRating);
-			console.log("Rotten Tomatoes URL:" + JSON.parse(body).tomatoURL);
-			console.log(' ');
-			fs.appendfile(log.txt, ('============== LOG ENTRY BEGIN =============\r\n' + Date() + '\r\n \r\nTERMINALCOMMAND'))
-				if (error) throw err;
+    // INCLUDE THE REQUEST NPM PACKAGE (DONT FORGET TO RUN "NPM INSTALL REQUEST" IN THIS FOLDER FIRST!) 
+    var request = require('request');
 
+    // RUN A REQUEST TO THE OMDB API WITH THE MOVIE SPECIFIED (CAN BE MULTI WORD MOVIES)
+    request('http://www.omdbapi.com/?t=' + value + '&y=plot=short&apikey=40e9cece', function(error, response, body) {
 
-		}
-	});
+        // IF THE REQUEST IS SUCCESFUL (i.e. IF THE RESPONSE STATUS CODE IS 200)
+        if (!error && response.statusCode == 200) {
+        
 
-function random() {
-			// boilerplate fs.readfile function given
-			//reads the file in the random.txt, if no data log error
-	fs.readfile('random.txt', 'utf8', function(error,data) {
-		if(error) {
-			//if error shown write error to console like: "error: error descrip"
-			console.log('error:', error);
-		} else {
-			//or else if no errors write data read from the random.txt file
-			//but first create a new array called DataArr
-			//then split the data with commas like: "data,(space)data"
-			var dataArr = data.split(', ');
-			//if the data TYPED BY THE USER equals 'spotify' which user inputted at index 0
-			//then execute the function 'spotify'
-			//using the data in the dataArray located at index [1]
-			if(dataArr[0] === 'spotify') {
-				spotify-this-song(dataArr[1]);
-			} 
-			//line101: if the data TYPED BY THE USER equals 'omdb' which user inputted at index 0
-			//line102: then execute the function 'omdb'
-			//line102: using the data in the dataArray located at index [1]
-			if(dataArr[0] === 'omdb') {
-				movie-this(dataArr[1]);
-			}
-		}
-	});
+            // PARSE THE BODY OF THE SITE W DOT NOTATION
+            console.log("======================================================================");
+            console.log("The movie's name is: " + JSON.parse(body).Title);
+            console.log("");
+            console.log("The movie was released in: " + JSON.parse(body).Year);
+            console.log("");
+            console.log("The movie's rating is: " + JSON.parse(body).imdbRating);
+            console.log("");
+            console.log("This movie was produced in the: " + JSON.parse(body).Country);
+            console.log("");
+            console.log("The language for this movie is in: " + JSON.parse(body).Language);
+            console.log("");
+            console.log("The movie's Plot: " + JSON.parse(body).Plot);
+            console.log("");
+            console.log("The movie's Actor's: " + JSON.parse(body).Actors);
+            console.log("");
+            console.log("The Rotten Tomato rating is: " + JSON.parse(body).Ratings[1].Value);
+            console.log("");
+            console.log("The Rotten Tomato URL is: " + JSON.parse(body).tomatoURL);
+            console.log("");      
+        }
+    });
 }
-
